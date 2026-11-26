@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AIR Ladder</title>
+<title>AIR Ladder — Your rank. Your roadmap.</title>
+<meta name="description" content="A personalised practice and rank-tracking app for JEE, NEET and Class 12 students.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <link rel="stylesheet" href="style.css">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
@@ -14,24 +16,31 @@
 <body>
 <div class="app">
   <header class="top">
-    <a class="brand" href="#problems">
+    <a class="brand" href="#dashboard">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="15" width="5" height="7" rx="1" fill="currentColor"/><rect x="9.5" y="9" width="5" height="13" rx="1" fill="currentColor"/><rect x="17" y="2" width="5" height="20" rx="1" fill="currentColor"/></svg>
       AIR Ladder
     </a>
     <div class="seg" id="examseg" role="group" aria-label="Exam"></div>
     <div class="chips">
+      <div class="chip chip-lv" title="Level from your answers"><small>Level</small><b id="xpv">1</b></div>
       <div class="chip" title="Days in a row with at least one submission"><small>Streak</small><b id="streakv">0d</b></div>
       <div class="chip" title="Modelled estimate from your answers"><small id="chiplab">Est. AIR</small><b id="chipv">-</b></div>
     </div>
+    <div id="userbox" class="userbox"></div>
   </header>
   <nav class="tabs" aria-label="Sections">
+    <a href="#dashboard" data-r="dashboard">Dashboard</a>
     <a href="#problems" data-r="problems">Problems</a>
+    <a href="#analytics" data-r="analytics">Analytics</a>
     <a href="#contest" data-r="contest">Contest</a>
     <a href="#profile" data-r="profile">Profile</a>
   </nav>
   <main id="view"></main>
-  <footer>Prototype with 27 sample problems. Other students, acceptance rates, speed cohorts and contest boards are simulated demo data. Rank figures are modelled estimates from your own marks, not official predictions. The timer starts when a problem opens.</footer>
+  <footer>Prototype with 27 sample problems. Other students, acceptance rates, speed cohorts and contest boards are simulated demo data. Rank figures are modelled estimates from your own marks, not official predictions. Accounts and analytics are stored locally on this device only.</footer>
 </div>
+<div id="authroot"></div>
+<script src="auth.js"></script>
+<script src="analytics.js"></script>
 <script src="questions.js"></script>
 <script src="script.js"></script>
 </body>
