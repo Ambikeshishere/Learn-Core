@@ -87,7 +87,7 @@ function render(){
   root.innerHTML='<div class="authovl" role="dialog" aria-modal="true" aria-label="Create your account">'+
     '<div class="authcard">'+
       '<section class="authside">'+
-        '<div class="brand abrand"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="15" width="5" height="7" rx="1" fill="currentColor"/><rect x="9.5" y="9" width="5" height="13" rx="1" fill="currentColor"/><rect x="17" y="2" width="5" height="20" rx="1" fill="currentColor"/></svg>AIR Ladder</div>'+
+        '<div class="brand abrand"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 2v20M19 2v20"/><path d="M5 7h14M5 12h14M5 17h14"/></svg>AIR Ladder</div>'+
         '<div class="acopy"><span class="akicker">YOUR RANK. YOUR ROADMAP.</span>'+
         '<h1>Every answer<br>moves you up.</h1>'+
         '<p>Know exactly where you stand, what to fix next, and how far you’ve come.</p></div>'+

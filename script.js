@@ -55,7 +55,7 @@ if(Array.isArray(window.EXTRA_QUESTIONS))window.EXTRA_QUESTIONS.forEach(function
 function typeset(el){try{if(el&&window.renderMathInElement)window.renderMathInElement(el,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false})}catch(e){}}
 var QBY={};Q.forEach(function(q){QBY[q.id]=q});
 
-var S={exam:load('ail.exam','jee'),att:load('ail.att',[]),q:null,sel:-1,locked:false,t0:0,res:null,tab:'desc',confirm:false,period:'w',range:'30',f:{text:'',diff:'',status:'',subj:''}};
+var S={exam:load('ail.exam','jee'),att:load('ail.att',[]),q:null,sel:-1,locked:false,t0:0,res:null,tab:'desc',confirm:false,period:'w',range:'30',planFocus:[],f:{text:'',diff:'',status:'',subj:''}};
 if(!EXAMS[S.exam])S.exam='jee';
 if(!Array.isArray(S.att))S.att=[];
 var U=window.Auth&&Auth.get()||null;
@@ -397,6 +397,7 @@ function heatSVG(set){
   return {total:total,svg:'<svg class="heat" viewBox="0 0 '+(W*14-3)+' 95" role="img" aria-label="Submission activity over the last 26 weeks">'+out+'</svg>'};
 }
 function renderProfile(){
+  S.planFocus=(U&&U.focus||[]).slice();
   var e=S.exam,ex=EXAMS[e],a=forExam(e),n=a.length,net=sum(a,function(x){return x.m}),es=estFrom(net,n,ex.pop),list=pool();
   var ok=a.filter(function(x){return x.ok===true}).length,wr=a.filter(function(x){return x.ok===false}).length;
   var acc=ok+wr?Math.round(ok/(ok+wr)*100)+'%':'-',avg=n?(sum(a,function(x){return x.t})/n/1000).toFixed(1)+' s':'-';
@@ -415,6 +416,19 @@ function renderProfile(){
     '<div class="airnum">'+(n?'~'+fmtIN(es.air):'-')+'</div>'+
     '<div>'+(n?'Top '+fmtTop(es.top)+'% of about '+fmtIN(ex.pop)+' candidates (modelled pool)':'Submit your first answer to get an estimate.')+'</div>'+
     '<div class="conf"><span>Confidence: '+conf+' ('+n+' submitted)</span><span class="meter"><i style="width:'+Math.round(Math.min(n/30,1)*100)+'%"></i></span></div></section>'+
+    '<section class="card"><h3>Your plan</h3><div class="planform">'+
+      '<div class="arow" style="max-width:520px">'+
+        '<label>Target rank<input id="pl-target" type="text" inputmode="numeric" value="'+esc(U&&U.target||'')+'" placeholder="e.g. 1000"></label>'+
+        '<label>Daily goal<select id="pl-goal">'+[5,10,20,30].map(function(g){
+          return '<option value="'+g+'"'+((U&&U.goal||10)===g?' selected':'')+'>'+g+' questions</option>';
+        }).join('')+'</select></label>'+
+      '</div>'+
+      '<div class="afield" style="margin-top:12px"><span>Focus subjects</span><div class="achips">'+
+        ['Physics','Chemistry','Maths','Biology'].map(function(s){
+          return '<button type="button" class="achip'+(S.planFocus.indexOf(s)>-1?' on':'')+'" data-act="focus" data-v="'+s+'">'+s+'</button>';
+        }).join('')+'</div></div>'+
+      '<div class="actions"><button class="btn sm" data-act="saveplan">Save plan</button><span class="hint">Used by your dashboard and recommendations.</span></div>'+
+    '</div></section>'+
     '<div class="two"><section class="card"><h3>Solved</h3><div class="bars">'+bars+'</div><p class="insight">Counted per problem in '+ex.name+'. A problem is solved once you have an Accepted submission.</p></section>'+
     '<section class="card"><h3>Your numbers</h3><div class="stats">'+
       '<div class="stat"><small>Net marks</small><b class="'+(net>0?'pos':net<0?'neg':'')+'">'+(net>0?'+':'')+net+'</b></div>'+
@@ -538,7 +552,7 @@ function renderAnalytics(){
     var cand=pool().filter(function(q){return q.tp===v.tp})[0];
     return '<tr><td>'+(cand?'<a href="#q-'+cand.id+'">'+esc(v.tp)+'</a>':esc(v.tp))+'</td><td class="n">'+v.n+'</td><td class="n">'+v.acc+'%</td><td class="n">'+v.pace+'×</td></tr>';
   }).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-2);padding:20px">No attempts in this period yet.</td></tr>';
-  var weak=weakTopics(3);
+  var weak=weakTopics(3,true);
   var focus=weak.length?weak.map(function(w,i){
     return '<div class="focusitem"><span class="ix">'+(i+1)+'</span><div class="grow"><b>'+esc(w.tp)+'</b><small>'+Math.round(w.acc*100)+'% accuracy · '+w.total+' attempts · '+w.pace.toFixed(2)+'× pace</small></div><a href="#q-'+w.id+'">Practise →</a></div>';
   }).join(''):'<p class="empty" style="padding:14px 0">Nothing flagged yet — answer more questions to unlock recommendations.</p>';
@@ -661,6 +675,16 @@ $('#view').addEventListener('click',function(ev){
   else if(act==='random'){var p=pool(),u=p.filter(function(q){return stOf(q.id)!=='s'});u=u.length?u:p;location.hash='q-'+u[Math.floor(Math.random()*u.length)].id}
   else if(act==='period'){S.period=b.dataset.v;renderContest()}
   else if(act==='range'){S.range=b.dataset.v;renderAnalytics()}
+  else if(act==='focus'){
+    var s=b.dataset.v,i=S.planFocus.indexOf(s);if(i>-1)S.planFocus.splice(i,1);else S.planFocus.push(s);b.classList.toggle('on',i<0);
+  }
+  else if(act==='saveplan'){
+    if(!U){toast('Create an account to save a plan.');return}
+    var g=+$('#pl-goal').value;
+    Auth.update({target:$('#pl-target').value.trim(),goal:g,focus:S.planFocus.slice()});
+    try{Analytics.track('plan_update',{goal:g,focus:S.planFocus.length})}catch(e){}
+    toast('Plan saved.');
+  }
   else if(act==='csv')exportAttemptsCSV();
   else if(act==='json')exportDataJSON();
   else if(act==='reset'){S.confirm=true;renderProfile()}
