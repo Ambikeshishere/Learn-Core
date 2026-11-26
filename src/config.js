@@ -15,6 +15,52 @@ export const ALL_EXAMS = ['jee', 'neet', 'boards'];
 export const DIFFICULTY = { E: 'Easy', M: 'Medium', H: 'Hard' };
 export const SUBJECTS = ['Physics', 'Chemistry', 'Maths', 'Biology'];
 
+/**
+ * Exam-specific voice. JEE leans into a maths-lab feel, NEET into a clinical
+ * recall feel, Boards into a revision desk. Kept as data so it is testable.
+ */
+export const EXAM_COPY = {
+  jee: {
+    kicker: 'MATHS LAB / JEE',
+    daily: 'Maths problem of the day',
+    focus: 'Weak chapters',
+    stripTitle: 'Formula strip',
+    strip: [
+      { k: 'Roots', v: 'x² − 5x + 6 = 0 → sum 5, product 6' },
+      { k: 'Derivative', v: 'd/dx (x³) = 3x²' },
+      { k: 'Integral', v: '∫₀^π sin x dx = 2' },
+      { k: 'Probability', v: 'n(S) = 36 for two dice' }
+    ],
+    note: 'Work the steps before you check the answer. Marks reward method, not speed.'
+  },
+  neet: {
+    kicker: 'CLINICAL NOTE / NEET',
+    daily: 'Case of the day',
+    focus: 'Weak systems',
+    stripTitle: 'Quick recall',
+    strip: [
+      { k: 'Gamete', v: '23 chromosomes · haploid' },
+      { k: 'Light reaction', v: 'Thylakoid membrane' },
+      { k: 'Ligase', v: 'Seals Okazaki fragments' },
+      { k: 'Pineal', v: 'Melatonin · sleep cycle' }
+    ],
+    note: 'Read the stem twice. Most NEET errors are misread keywords, not missing facts.'
+  },
+  boards: {
+    kicker: 'REVISION DESK / BOARDS',
+    daily: 'Revision question of the day',
+    focus: 'Weak topics',
+    stripTitle: 'Exam notes',
+    strip: [
+      { k: 'KE', v: '½mv²' },
+      { k: 'pH', v: '−log[H⁺]' },
+      { k: 'Moles', v: 'mass ÷ molar mass' },
+      { k: 'Power', v: '1 / f (metres)' }
+    ],
+    note: 'Board marks reward neat steps and correct units. Write them out once.'
+  }
+};
+
 /** 27 hand-written sample questions used for the prototype. */
 export const SEED_QUESTIONS = [
   {id:'p1',t:'Kinetic Energy of a Moving Mass',d:'E',s:'Physics',x:ALL_EXAMS,tp:'Work, energy and power',q:'A body of mass 2 kg moves at 3 m/s. What is its kinetic energy?',o:['3 J','6 J','9 J','18 J'],a:2,e:'KE = ½mv² = ½ × 2 × 3² = 9 J.',m:18},

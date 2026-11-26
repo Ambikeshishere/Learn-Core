@@ -2,13 +2,17 @@
 
 import { EXAMS } from './config.js';
 import { escapeHTML } from './config.js';
-import { signup, login, continueAsGuest } from './auth.js';
+import { signup, login, continueAsGuest, savedAccount } from './auth.js';
 
 const root = () => document.getElementById('authroot');
 
 export function openAuth(mode = 'signup'){
   const host = root();
   if(!host) return;
+  const existing = savedAccount();
+  const replaceWarning = mode === 'signup' && existing && !existing.guest
+    ? `<p class="awarn">A local account already exists on this device. Creating a new one will replace it.</p>`
+    : '';
   host.innerHTML = `
     <div class="authovl" role="dialog" aria-modal="true" aria-labelledby="atitle">
       <div class="authcard">
@@ -33,6 +37,7 @@ export function openAuth(mode = 'signup'){
           </div>
           <h2 id="atitle">${mode === 'signup' ? 'Start your ladder' : 'Welcome back'}</h2>
           <p class="asub">${mode === 'signup' ? 'Two minutes to set up. No payment, no spam.' : 'Continue on this device.'}</p>
+          ${replaceWarning}
           <form id="authform" novalidate>
             ${mode === 'signup' ? `
               <label>Your name<input name="name" autocomplete="name" placeholder="e.g. Ananya Sharma" required></label>

@@ -1,6 +1,6 @@
 /** All screen renderers and their local interactions. */
 
-import { EXAMS, ALL_EXAMS, DIFFICULTY, escapeHTML } from './config.js';
+import { EXAMS, ALL_EXAMS, DIFFICULTY, EXAM_COPY, escapeHTML } from './config.js';
 import {
   hash32, dayKey, formatIN, formatK, formatT, formatTop, sum,
   estimateRank, computeStreaks, levelInfo, cohortFor, compareTime,
@@ -10,7 +10,7 @@ import {
   state, QBY, pool, forExam, statusOf, filteredAttempts, saveAttempts
 } from './state.js';
 import {
-  ladderSVG, trendSVG, histSVG, chartSVG, heatSVG, toast, download, typeset
+  ladderSVG, trendSVG, histSVG, chartSVG, heatSVG, subjectIcon, toast, download, typeset
 } from './components.js';
 import { track, allEvents } from './events.js';
 import { store, KEYS, buildBackup } from './store.js';
@@ -114,6 +114,7 @@ export function updateChip(){
 /* ---------- problems list ---------- */
 export function renderProblems(){
   const exam = EXAMS[state.exam];
+  const copy = EXAM_COPY[state.exam];
   const list = pool();
   const solved = list.filter(q => statusOf(q.id) === 's').length;
   const daily = dailyQuestion();
@@ -132,7 +133,7 @@ export function renderProblems(){
     `<button class="btn ghost sm" data-act="random">Surprise me</button></div>` +
     `<div class="card ptable" id="rows"></div><p class="hint" id="rcount"></p></div>` +
     `<aside class="side">` +
-      `<div class="card daily"><div class="dt">Daily question · ${new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</div>` +
+      `<div class="card daily"><div class="dt">${escapeHTML(copy.daily)} · ${new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</div>` +
       `<div class="nm">${escapeHTML(daily.t)}</div><div style="display:flex;gap:10px;align-items:center"><span class="badge d-${daily.d}">${DIFFICULTY[daily.d]}</span><a class="btn sm" href="#q-${daily.id}">${statusOf(daily.id) === 's' ? 'Solve again' : 'Solve'}</a></div></div>` +
       `<div class="card"><h3>Your climb</h3><div class="prog">${ladderSVG(Math.round(fraction * 100), solved + '/' + list.length)}<div class="dstat">${byDifficulty}</div></div></div>` +
       `<div class="card"><h3>Streak</h3><div class="stats"><div class="stat"><small>Current</small><b>${streaks.current}d</b></div><div class="stat"><small>Longest</small><b>${streaks.longest}d</b></div></div><p class="insight">Answer at least one question a day to keep it going.</p></div>` +
@@ -159,7 +160,7 @@ export function drawRows(){
     if(text && (q.t + ' ' + q.tp + ' ' + q.s).toLowerCase().indexOf(text) < 0) return;
     shown++;
     out += `<a class="prow" href="#q-${q.id}"><span class="st ${status}">${status === 's' ? CHECK : status === 't' ? '<i></i>' : ''}</span>` +
-      `<span class="ptt"><span class="pn">${i + 1}.</span>${q.t}</span><span class="ptp">${q.tp}</span>` +
+      `<span class="ptt"><span class="pn">${i + 1}.</span>${subjectIcon(q.s)}${q.t}</span><span class="ptp">${q.tp}</span>` +
       `<span class="pac">${(cohortFor(q).acceptance * 100).toFixed(1)}%</span><span class="pbest">${bestOf(q.id)}</span>` +
       `<span class="pdf d-${q.d}">${DIFFICULTY[q.d]}</span></a>`;
   });
@@ -195,9 +196,10 @@ export function drawLeft(){
   const mine = forExam(state.exam).filter(a => a.q === q.id);
   let body = '';
   if(state.tab === 'desc'){
-    body = `<h1 class="ptitle">${number}. ${q.t}</h1><div class="badges"><span class="badge d-${q.d}">${DIFFICULTY[q.d]}</span><span class="tagc">${q.s}</span><span class="tagc">${q.tp}</span></div>` +
+    body = `<h1 class="ptitle">${number}. ${subjectIcon(q.s)}${q.t}</h1><div class="badges"><span class="badge d-${q.d}">${DIFFICULTY[q.d]}</span><span class="tagc">${q.s}</span><span class="tagc">${q.tp}</span></div>` +
       `<p class="qtext">${q.q}</p>` +
       `<div class="kv"><div><small>Marking</small><b>+4 / −1 / 0</b></div><div><small>Median time</small><b>${q.m} s</b></div><div><small>Success rate</small><b>${(cohort.acceptance * 100).toFixed(1)}%</b></div><div><small>Attempts</small><b>${formatK(cohort.attempts)}</b></div></div>` +
+      `<p class="insight exam-note">${escapeHTML(EXAM_COPY[state.exam].note)}</p>` +
       `<p class="insight">A wrong answer costs 1 extra mark, so a guess breaks even at 20% confidence. <span class="sim">Simulated stats</span></p>` + (q.src ? `<p class="insight">Source: ${q.src}</p>` : '');
   } else if(state.tab === 'sol'){
     body = mine.length
@@ -353,6 +355,7 @@ export function renderProfile(){
 /* ---------- dashboard ---------- */
 export function renderDashboard(){
   const exam = EXAMS[state.exam];
+  const copy = EXAM_COPY[state.exam];
   const attempts = forExam(state.exam);
   const level = levelInfo(state.attempts);
   const streaks = computeStreaks(state.attempts);
@@ -376,7 +379,7 @@ export function renderDashboard(){
   const focus = user && user.focus && user.focus.length ? user.focus.join(' · ') : exam.subjects.join(' · ');
 
   $('#view').innerHTML = `<section class="hero"><div class="hero-main">` +
-    `<div class="hi">Field note · ${escapeHTML(exam.full)}</div><h1>${greeting}, ${escapeHTML(name)}.</h1>` +
+    `<div class="hi">${escapeHTML(copy.kicker)} · ${escapeHTML(exam.full)}</div><h1>${greeting}, ${escapeHTML(name)}.</h1>` +
     `<p>${escapeHTML(target)} &nbsp;·&nbsp; ${left ? left + ' questions to hit today’s goal' : 'Daily goal complete — nice work'}</p>` +
     `<div class="herogrid">` +
       `<div class="hstat"><small>Level</small><b>${level.level}</b><span>${level.current} / ${level.needed} XP</span></div>` +
@@ -386,14 +389,18 @@ export function renderDashboard(){
     `<div class="dgrid"><div class="dstack">` +
       `<section class="card"><h3>Today’s goal</h3><div class="goalrow">${ladderSVG(percent, percent + '%')}` +
         `<div class="goalmeta"><b>${todayCount} / ${goal} solved today</b><small>${escapeHTML(focus)}</small><small style="margin-top:6px">Keep a streak going: one answer a day counts.</small></div></div></section>` +
-      `<section class="card"><h3>Today’s question</h3><div class="dtask"><div><span class="pill d-${daily.d}">${DIFFICULTY[daily.d]}</span><div class="nm">${escapeHTML(daily.t)}</div>` +
+      `<section class="card"><h3>${escapeHTML(copy.daily)}</h3><div class="dtask"><div><span class="pill d-${daily.d}">${DIFFICULTY[daily.d]}</span><div class="nm">${escapeHTML(daily.t)}</div>` +
         `<p class="hint" style="margin:0">${escapeHTML(daily.tp)} · ${escapeHTML(daily.s)} · median ${daily.m} s</p></div>` +
         `<a class="btn" href="#q-${daily.id}">${statusOf(daily.id) === 's' ? 'Solve again' : 'Solve now'} →</a></div></section>` +
-      `<section class="card"><h3>Focus next</h3>` +
+      `<section class="card"><h3>${escapeHTML(copy.focus)}</h3>` +
         (weak.length ? weak.map((w, i) => `<div class="focusitem"><span class="ix">${i + 1}</span><div class="grow"><b>${escapeHTML(w.topic)}</b>` +
           `<small>${Math.round(w.accuracy * 100)}% accuracy · ${w.total} attempts · ${w.pace.toFixed(2)}× pace</small></div><a href="#q-${w.sampleId}">Review →</a></div>`).join('')
           : '<p class="empty" style="padding:14px 0">Answer a few questions to get personal recommendations.</p>') +
-      `</section></div><div class="dstack">` +
+      `</section>` +
+      `<section class="card exam-strip"><h3>${escapeHTML(copy.stripTitle)}</h3><div class="strip-grid">` +
+        copy.strip.map(item => `<div class="strip-item"><span>${escapeHTML(item.k)}</span><code>${escapeHTML(item.v)}</code></div>`).join('') +
+      `</div><p class="insight">${escapeHTML(copy.note)}</p></section>` +
+      `</div><div class="dstack">` +
       `<section class="card"><h3>Your numbers</h3><div class="stats">` +
         `<div class="stat"><small>Accuracy</small><b>${correct + wrong ? accuracy + '%' : '-'}</b></div><div class="stat"><small>Submitted</small><b>${attempts.length}</b></div>` +
         `<div class="stat"><small>Net marks</small><b>${sum(attempts, a => a.m)}</b></div><div class="stat"><small>XP earned</small><b>${level.xp}</b></div></div>` +
@@ -425,7 +432,7 @@ export function exportAttemptsCSV(){
 }
 
 export function exportDataJSON(){
-  const payload = buildBackup(currentUser(), state.attempts, allEvents());
+  const payload = buildBackup(currentUser(), state.attempts, allEvents(), state.exam, document.documentElement.dataset.theme || null);
   download('air-ladder-data.json', JSON.stringify(payload, null, 2), 'application/json');
   track('export', { type: 'json' });
   toast('Full data exported as JSON.');
@@ -445,7 +452,15 @@ export function importDataJSON(text){
     delete safe.pw; delete safe.salt;
     updateUser(safe);
   }
-  toast('Backup restored. ' + state.attempts.length + ' attempts imported.');
+  if(result.data.exam && EXAMS[result.data.exam]){
+    state.exam = result.data.exam;
+    store.set(KEYS.exam, state.exam);
+  }
+  if(result.data.theme){
+    document.documentElement.dataset.theme = result.data.theme;
+    store.set(KEYS.theme, result.data.theme);
+  }
+  toast('Backup restored. ' + state.attempts.length + (state.attempts.length === 1 ? ' attempt' : ' attempts') + ' imported.');
   drawHeader(); rerender();
 }
 
@@ -457,7 +472,9 @@ export function renderAnalytics(){
   const accuracy = correct + wrong ? Math.round(correct / (correct + wrong) * 100) : 0;
   const average = attempts.length ? (sum(attempts, a => a.t) / attempts.length / 1000).toFixed(1) + ' s' : '-';
   const net = sum(attempts, a => a.m);
-  const days = state.range === 'all' ? 30 : +state.range;
+  const days = state.range === 'all'
+    ? (attempts.length ? Math.min(90, Math.max(30, Math.ceil((Date.now() - Math.min(...attempts.map(a => a.ts))) / 864e5))) : 30)
+    : +state.range;
   const bar = (label, value, color) => `<div class="r"><span>${label}</span><span class="t"><i style="width:${value}%;background:${color}"></i></span><span class="v">${value}%</span></div>`;
   const subjects = exam.subjects.map(subject => {
     const group = attempts.filter(a => a.s === subject);

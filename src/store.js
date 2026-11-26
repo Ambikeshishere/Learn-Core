@@ -32,13 +32,15 @@ export const KEYS = {
 };
 
 /** Build a portable backup. The password hash is deliberately excluded. */
-export function buildBackup(user, attempts, events){
+export function buildBackup(user, attempts, events, exam, theme){
   const safeUser = {};
   if(user) Object.keys(user).forEach(k => { if(k !== 'pw' && k !== 'salt') safeUser[k] = user[k]; });
   return {
     format: 'air-ladder-backup',
     version: 1,
     exportedAt: new Date().toISOString(),
+    exam,
+    theme,
     user: safeUser,
     attempts,
     events

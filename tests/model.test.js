@@ -4,7 +4,8 @@ import {
   hash32, rng, phi, estimateRank, computeStreaks, levelInfo,
   cohortFor, compareTime, weakTopics, trendBuckets, validateBackup
 } from '../src/model.js';
-import { normalizeQuestion, buildQuestionBank, SEED_QUESTIONS } from '../src/config.js';
+import { normalizeQuestion, buildQuestionBank, SEED_QUESTIONS, EXAM_COPY } from '../src/config.js';
+import { buildBackup } from '../src/store.js';
 
 const now = new Date('2026-11-27T12:00:00Z').getTime();
 const day = 864e5;
@@ -82,6 +83,36 @@ test('validateBackup rejects malformed attempts', () => {
   const good = validateBackup({ attempts: [{ q: 'p1', e: 'jee', ok: true, t: 100, ts: now }] });
   assert.equal(good.ok, true);
   assert.equal(good.data.attempts.length, 1);
+});
+
+test('buildBackup excludes secrets and carries exam and theme', () => {
+  const backup = buildBackup({ name: 'A', pw: 'hash', salt: 's' }, [], [], 'neet', 'light');
+  assert.equal(backup.exam, 'neet');
+  assert.equal(backup.theme, 'light');
+  assert.equal(backup.user.pw, undefined);
+  assert.equal(backup.user.salt, undefined);
+  assert.equal(backup.user.name, 'A');
+});
+
+test('validateBackup preserves exam and theme from a backup', () => {
+  const result = validateBackup({ attempts: [], exam: 'neet', theme: 'light' });
+  assert.equal(result.ok, true);
+  assert.equal(result.data.exam, 'neet');
+  assert.equal(result.data.theme, 'light');
+  assert.equal(validateBackup({ attempts: [], theme: 'neon' }).data.theme, null);
+});
+
+test('exam copy is distinct and complete for every exam', () => {
+  const keys = ['jee', 'neet', 'boards'];
+  keys.forEach(key => {
+    const copy = EXAM_COPY[key];
+    assert.ok(copy.kicker && copy.daily && copy.focus && copy.stripTitle && copy.note);
+    assert.equal(copy.strip.length, 4);
+    copy.strip.forEach(item => assert.ok(item.k && item.v));
+  });
+  assert.notEqual(EXAM_COPY.jee.daily, EXAM_COPY.neet.daily);
+  assert.match(EXAM_COPY.jee.kicker, /MATHS/);
+  assert.match(EXAM_COPY.neet.kicker, /CLINICAL/);
 });
 
 test('normalizeQuestion sanitises external input', () => {

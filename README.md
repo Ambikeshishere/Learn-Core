@@ -31,7 +31,7 @@ AIR Ladder turns every answer into three things:
 
 Additional surfaces:
 
-- **Dashboard** — daily goal, daily question, focus list, recent activity
+- **Dashboard** — daily goal, exam-specific daily question, focus list, quick-reference strip, recent activity
 - **Problems** — searchable/filterable table with status icons and difficulty pills
 - **Solve view** — split description/answer layout, worked solution, attempt history, simulated speed cohort
 - **Analytics** — accuracy, pace, net marks, subject/difficulty/topic breakdown, CSV + JSON export
@@ -50,6 +50,14 @@ The interface is a deliberate blend, not a generic dashboard:
 | **Vercel** | 10% | Sharp borders, monochrome precision, tight grid, zero decorative chrome |
 
 No gradients, no neon, no game-console panels. Colour is used as a marker, never as decoration.
+
+Each exam also gets its own voice without breaking that system:
+
+| Exam | Identity | Small details |
+| --- | --- | --- |
+| **JEE** | Maths lab | Indigo graph-paper grid, "Maths problem of the day", "Weak chapters", formula strip, sigma/atom/flask subject marks |
+| **NEET** | Clinical desk | Teal dotted grid, "Case of the day", "Weak systems", quick-recall strip, DNA subject mark, clinical reading note |
+| **Boards** | Revision desk | Neutral grid, "Revision question of the day", "Weak topics", exam-notes strip |
 
 ## 4. Architecture
 
@@ -86,12 +94,12 @@ tools/import_questions.py  Optional JEEBench question importer
 
 ```bash
 npm run dev      # http://localhost:4173
-npm test         # 10 unit tests
+npm test         # 13 unit tests
 ```
 
 No build step, no dependencies, no API keys. A modern browser over `localhost` or HTTPS is required for Web Crypto.
 
-First visit starts as a guest so the prototype is immediately explorable. Create a real local account from the avatar menu at any time.
+First visit starts as a guest so the prototype is immediately explorable. Create a real local account from the avatar menu at any time. If a real account already exists but you logged out, the app asks you to log back in instead of replacing it with a guest.
 
 ## 7. Data model
 
@@ -108,7 +116,7 @@ Attempt = {
 }
 ```
 
-Backups are portable JSON (`format: air-ladder-backup`, `version: 1`) and can be restored from **Analytics → Restore JSON**.
+Backups are portable JSON (`format: air-ladder-backup`, `version: 1`) and can be restored from **Analytics → Restore JSON**. They carry the active exam and theme, exclude password hash/salt, and are schema-validated before overwriting local data.
 
 ## 8. Roadmap
 

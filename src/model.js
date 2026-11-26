@@ -196,7 +196,9 @@ export function validateBackup(payload){
     data: {
       user: payload.user && typeof payload.user === 'object' ? payload.user : null,
       attempts: validAttempts,
-      events: Array.isArray(payload.events) ? payload.events : []
+      events: Array.isArray(payload.events) ? payload.events : [],
+      exam: typeof payload.exam === 'string' ? payload.exam : null,
+      theme: payload.theme === 'light' || payload.theme === 'dark' ? payload.theme : null
     }
   };
 }

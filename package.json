@@ -1,6 +1,6 @@
 {
   "name": "air-ladder",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "A local-first practice and rank-tracking prototype for JEE, NEET and Class 12 students.",
   "type": "module",

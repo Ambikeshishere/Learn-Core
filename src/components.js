@@ -12,6 +12,17 @@ export function ladderSVG(pct, label){
   return `<svg class="ladder" viewBox="0 0 74 118" role="img" aria-label="${pct}% of goal">${out}</svg>`;
 }
 
+/** Small subject mark used in problem rows and question headers. */
+export function subjectIcon(subject){
+  const paths = {
+    Physics: '<circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4.5"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(120 12 12)"/>',
+    Chemistry: '<path d="M9 3h6M10 3v6L5 19a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3L14 9V3"/><path d="M7.5 15h9"/>',
+    Maths: '<path d="M18 5c-1.5 0-2.5 1-2.5 2.5S16.5 10 18 10s2.5 1 2.5 2.5S19.5 15 18 15c-2 0-3-1.5-3-3.5"/><path d="M6 15c2 0 3-1.5 3-3.5S8 8 6 8 3.5 7 3.5 5.5 4.5 3 6 3s2.5 1 2.5 2"/><path d="M4 12h16"/>',
+    Biology: '<path d="M7 3c0 4 10 4 10 8S7 15 7 21"/><path d="M17 3c0 4-10 4-10 8s10 4 10 10"/><path d="M9 7h6M9 17h6"/>'
+  };
+  return `<svg class="subj-icon subj-${subject}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[subject] || paths.Physics}</svg>`;
+}
+
 export function toast(message){
   const old = document.querySelector('.toast');
   if(old) old.remove();

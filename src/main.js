@@ -2,9 +2,10 @@
 
 import { EXAMS } from './config.js';
 import { store, KEYS } from './store.js';
-import { currentUser, continueAsGuest, updateUser } from './auth.js';
+import { currentUser, savedAccount, continueAsGuest, updateUser } from './auth.js';
 import { track } from './events.js';
 import { toast, typeset } from './components.js';
+import { openAuth } from './auth-ui.js';
 import { state, pool, statusOf } from './state.js';
 import {
   setRerender, drawHeader, updateChip, route, drawRows, drawLeft,
@@ -14,7 +15,13 @@ import {
 
 const $ = selector => document.querySelector(selector);
 
-setRerender(() => { drawHeader(); route(); });
+function applyExamTheme(){
+  document.documentElement.dataset.exam = state.exam;
+  const savedTheme = store.get(KEYS.theme, null);
+  if(savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+}
+
+setRerender(() => { applyExamTheme(); drawHeader(); route(); });
 
 /* Exam switcher */
 $('#examseg').addEventListener('click', event => {
@@ -27,7 +34,7 @@ $('#examseg').addEventListener('click', event => {
   const user = currentUser();
   if(user && !user.guest) updateUser({ exam: state.exam });
   track('exam_switch', { to: state.exam });
-  drawHeader(); route();
+  applyExamTheme(); drawHeader(); route();
 });
 
 /* Delegated actions inside the main view */
@@ -112,13 +119,18 @@ window.addEventListener('ail:auth', event => {
   state.user = user;
   if(user && EXAMS[user.exam]) state.exam = user.exam;
   state.planFocus = (user && user.focus || []).slice();
-  drawHeader(); route();
+  applyExamTheme(); drawHeader(); route();
 });
 
 window.addEventListener('hashchange', route);
 window.addEventListener('load', () => typeset($('#view')));
 
 /* First visit starts as a guest so the prototype is immediately explorable.
-   A real account can be created at any time from the avatar menu. */
-if(!currentUser()) continueAsGuest();
-drawHeader(); route();
+   If a real account exists but the session was ended, show login instead of
+   replacing that account with a guest record. */
+if(!currentUser()){
+  const saved = savedAccount();
+  if(saved && !saved.guest) openAuth('login');
+  else continueAsGuest();
+}
+applyExamTheme(); drawHeader(); route();

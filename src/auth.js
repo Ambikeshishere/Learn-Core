@@ -33,6 +33,8 @@ function readSession(){ return store.get(KEYS.session, false) ? readAccount() : 
 function emit(user){ window.dispatchEvent(new CustomEvent('ail:auth', { detail: { user } })); }
 
 export function currentUser(){ return readSession(); }
+/** The stored account even when logged out — used to avoid overwriting it with a guest. */
+export function savedAccount(){ return readAccount(); }
 export function initials(name){
   return String(name || 'Guest').trim().split(/\s+/).slice(0, 2)
     .map(part => part.charAt(0).toUpperCase()).join('') || 'G';

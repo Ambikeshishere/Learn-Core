@@ -352,6 +352,45 @@ th:first-child,td:first-child{text-align:left;font-family:var(--f-body)}
 .datnote{font-size:12px;color:var(--ink2);margin:12px 0 0}
 .exportrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 
+/* exam-specific identity — JEE maths lab, NEET clinical desk */
+html[data-exam="jee"]{
+  --exam-accent:#4F46E5;
+}
+html[data-exam="jee"] body{
+  background-image:linear-gradient(to right,color-mix(in srgb,var(--exam-accent) 12%,transparent) 1px,transparent 1px),
+                   linear-gradient(to bottom,color-mix(in srgb,var(--exam-accent) 12%,transparent) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+html[data-exam="neet"]{
+  --exam-accent:#0D9488;
+}
+html[data-exam="neet"] body{
+  background-image:radial-gradient(circle at 1px 1px,color-mix(in srgb,var(--exam-accent) 18%,transparent) 1px,transparent 0);
+  background-size:22px 22px;
+}
+html[data-exam="jee"] .hero{border-left-color:var(--exam-accent)}
+html[data-exam="jee"] .hero .hi,
+html[data-exam="jee"] .daily .dt{color:var(--exam-accent)}
+html[data-exam="neet"] .hero{border-left-color:var(--exam-accent)}
+html[data-exam="neet"] .hero .hi,
+html[data-exam="neet"] .daily .dt{color:var(--exam-accent)}
+html[data-exam="neet"] .daily{border-top-color:var(--exam-accent)}
+
+.subj-icon{width:15px;height:15px;flex:none;vertical-align:-3px;margin-right:6px;color:var(--ink2)}
+.ptitle .subj-icon{width:22px;height:22px;vertical-align:-4px;margin-right:9px;color:var(--accent)}
+.subj-Maths{color:var(--exam-accent,#4F46E5)}
+.subj-Biology{color:var(--exam-accent,#0D9488)}
+.subj-Physics{color:var(--blue)}
+.subj-Chemistry{color:var(--med)}
+
+.exam-strip{border-top:3px solid var(--exam-accent,var(--accent))}
+.strip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.strip-grid{grid-template-columns:1fr}}
+.strip-item{display:grid;gap:2px;padding:8px 10px;background:var(--paper);border:1px solid var(--line);border-radius:3px}
+.strip-item span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--ink2)}
+.strip-item code{font-family:var(--f-mono);font-size:12px;color:var(--ink);overflow-wrap:anywhere}
+.exam-note{border-left:3px solid var(--exam-accent,var(--accent));padding-left:10px;margin-top:12px}
+
 /* signup / login — form on a desk, PW warmth + Vercel edges */
 body.authopen{overflow:hidden}
 .authovl{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;overflow:auto;background:rgba(11,18,32,.62)}
@@ -377,6 +416,7 @@ body.authopen{overflow:hidden}
 .atabs button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 .authform h2{font-size:27px;letter-spacing:-.03em}
 .asub{color:var(--ink2);font-size:14px;margin:6px 0 20px}
+.awarn{color:var(--ink);font-size:12px;line-height:1.5;background:color-mix(in srgb,var(--med) 12%,transparent);border:1px solid color-mix(in srgb,var(--med) 35%,transparent);border-left:3px solid var(--med);border-radius:3px;padding:8px 10px;margin:-8px 0 14px}
 .authform label,.afield{display:block;margin-bottom:14px;font-size:13px;font-weight:700}
 .authform label small{font-weight:500;color:var(--ink2)}
 .authform input,.authform select{display:block;width:100%;margin-top:6px;background:var(--card);color:var(--ink);border:1px solid var(--line2);
