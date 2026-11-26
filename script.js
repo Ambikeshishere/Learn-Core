@@ -76,6 +76,16 @@ function fmtT(ms){return (ms/1000).toFixed(1)+' s'}
 /* ---------- v2 helpers: progress, badges, insights, export ---------- */
 function xpTotal(){return sum(S.att,function(a){return a.ok===true?10:a.ok===false?3:1})}
 function levelInfo(){var xp=xpTotal();return {xp:xp,lv:Math.floor(xp/100)+1,cur:xp%100,need:100}}
+/* Progress as a ladder instead of a donut: ten rungs, filled left to right.
+   Used on both the dashboard goal and the problems sidebar so the app has
+   its own visual language rather than the usual coding-site ring. */
+function ladderSVG(pct,label){
+  var rungs=10,filled=Math.max(0,Math.min(rungs,Math.round(pct/100*rungs))),out='';
+  out+='<line class="rail" x1="8" y1="4" x2="8" y2="98"/><line class="rail" x1="66" y1="4" x2="66" y2="98"/>';
+  for(var i=0;i<rungs;i++)out+='<rect class="'+(i<filled?'on':'off')+'" x="10" y="'+(8+i*9)+'" width="54" height="4" rx="1"/>';
+  out+='<text x="37" y="113" text-anchor="middle">'+esc(label)+'</text>';
+  return '<svg class="ladder" viewBox="0 0 74 118" role="img" aria-label="'+pct+'% of goal">'+out+'</svg>';
+}
 function toast(msg){
   var old=$('.toast');if(old)old.remove();
   var d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.textContent=msg;
@@ -139,7 +149,7 @@ function trendSVG(days){
   var area=d+' L'+X(days-1).toFixed(1)+' '+(H-pb)+' L'+X(0).toFixed(1)+' '+(H-pb)+' Z';
   var g='';[0,Math.ceil(mx/2),mx].forEach(function(v){var y=Y(v);g+='<line class="gl" x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/><text x="'+(pl-6)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+v+'</text>'});
   var ticks=[0,Math.floor((days-1)/2),days-1].map(function(i){return '<text x="'+X(i).toFixed(1)+'" y="'+(H-7)+'" text-anchor="'+(i===0?'start':i===days-1?'end':'middle')+'">'+labels[i].toLocaleDateString('en-IN',{day:'numeric',month:'short'})+'</text>'}).join('');
-  return '<svg class="trend" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Submissions per day">'+g+'<path class="area" d="'+area+'"/><path class="ln" d="'+d+'"/>'+
+  return '<svg class="trend" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Answers per day">'+g+'<path class="area" d="'+area+'"/><path class="ln" d="'+d+'"/>'+
     buckets.map(function(b,i){return b.n?'<circle class="dot" cx="'+X(i).toFixed(1)+'" cy="'+Y(b.n).toFixed(1)+'" r="3"/>':''}).join('')+ticks+'</svg>';
 }
 
@@ -243,7 +253,7 @@ function bestOf(id){
 function dailyQ(){var p=pool();return p[hash(dayKey(Date.now())+S.exam)%p.length]}
 function renderProblems(){
   var ex=EXAMS[S.exam],list=pool(),solved=list.filter(function(q){return stOf(q.id)==='s'}).length,dq=dailyQ();
-  var circ=2*Math.PI*40,frac=list.length?solved/list.length:0;
+  var frac=list.length?solved/list.length:0;
   var byD=['E','M','H'].map(function(d){var t=list.filter(function(q){return q.d===d}),s=t.filter(function(q){return stOf(q.id)==='s'}).length;return '<div><span class="d-'+d+'">'+DN[d]+'</span><b>'+s+'/'+t.length+'</b></div>'}).join('');
   var st=streaks();
   $('#view').innerHTML='<div class="plist"><div>'+
@@ -251,20 +261,20 @@ function renderProblems(){
     '<select id="fd" aria-label="Difficulty"><option value="">Difficulty</option><option value="E">Easy</option><option value="M">Medium</option><option value="H">Hard</option></select>'+
     '<select id="fst" aria-label="Status"><option value="">Status</option><option value="todo">Todo</option><option value="t">Attempted</option><option value="s">Solved</option></select>'+
     '<select id="fsub" aria-label="Subject"><option value="">Subject</option>'+ex.subjects.map(function(s){return '<option>'+s+'</option>'}).join('')+'</select>'+
-    '<button class="btn ghost sm" data-act="random">Pick random</button></div>'+
+    '<button class="btn ghost sm" data-act="random">Surprise me</button></div>'+
     '<div class="card ptable" id="rows"></div><p class="hint" id="rcount"></p></div>'+
     '<aside class="side">'+
       '<div class="card daily"><div class="dt">Daily question · '+new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+'</div>'+
       '<div class="nm">'+dq.t+'</div><div style="display:flex;gap:10px;align-items:center"><span class="badge d-'+dq.d+'">'+DN[dq.d]+'</span><a class="btn sm" href="#q-'+dq.id+'">'+(stOf(dq.id)==='s'?'Solve again':'Solve')+'</a></div></div>'+
-      '<div class="card"><h3>Progress</h3><div class="prog"><svg class="donut" viewBox="0 0 100 100" role="img" aria-label="'+solved+' of '+list.length+' solved"><circle class="tr" cx="50" cy="50" r="40"/><circle class="fg" cx="50" cy="50" r="40" stroke-dasharray="'+(circ*frac).toFixed(1)+' '+circ.toFixed(1)+'"/><text x="50" y="52">'+solved+'</text><text class="sub" x="50" y="66">/ '+list.length+' solved</text></svg><div class="dstat">'+byD+'</div></div></div>'+
-      '<div class="card"><h3>Streak</h3><div class="stats"><div class="stat"><small>Current</small><b>'+st.cur+'d</b></div><div class="stat"><small>Longest</small><b>'+st.max+'d</b></div></div><p class="insight">Submit at least one answer a day to keep it going.</p></div>'+
+      '<div class="card"><h3>Your climb</h3><div class="prog">'+ladderSVG(Math.round(frac*100),solved+'/'+list.length)+'<div class="dstat">'+byD+'</div></div></div>'+
+      '<div class="card"><h3>Streak</h3><div class="stats"><div class="stat"><small>Current</small><b>'+st.cur+'d</b></div><div class="stat"><small>Longest</small><b>'+st.max+'d</b></div></div><p class="insight">Answer at least one question a day to keep it going.</p></div>'+
     '</aside></div>';
   $('#fd').value=S.f.diff;$('#fst').value=S.f.status;$('#fsub').value=S.f.subj;
   drawRows();
 }
 function drawRows(){
   var list=pool(),f=S.f,txt=f.text.trim().toLowerCase();
-  var out='<div class="prow head"><span></span><span>Title</span><span>Topic</span><span style="text-align:right">Acceptance</span><span style="text-align:right">Best</span><span style="text-align:right">Level</span></div>',n=0;
+  var out='<div class="prow head"><span></span><span>Title</span><span>Topic</span><span style="text-align:right">Success</span><span style="text-align:right">Best</span><span style="text-align:right">Level</span></div>',n=0;
   list.forEach(function(q,i){
     var st=stOf(q.id);
     if(f.diff&&q.d!==f.diff)return;
@@ -297,18 +307,18 @@ function renderProblem(){
 }
 function drawLeft(){
   var q=S.q,num=pool().indexOf(q)+1,c=cohort(q),L='ABCD';
-  var tabs=[['desc','Description'],['sol','Solution'],['sub','Submissions']].map(function(t){return '<button data-act="tab" data-v="'+t[0]+'" aria-pressed="'+(S.tab===t[0])+'">'+t[1]+'</button>'}).join('');
+  var tabs=[['desc','Description'],['sol','Solution'],['sub','Attempts']].map(function(t){return '<button data-act="tab" data-v="'+t[0]+'" aria-pressed="'+(S.tab===t[0])+'">'+t[1]+'</button>'}).join('');
   var mine=forExam(S.exam).filter(function(a){return a.q===q.id}),body='';
   if(S.tab==='desc'){
     body='<h1 class="ptitle">'+num+'. '+q.t+'</h1><div class="badges"><span class="badge d-'+q.d+'">'+DN[q.d]+'</span><span class="tagc">'+q.s+'</span><span class="tagc">'+q.tp+'</span></div>'+
       '<p class="qtext">'+q.q+'</p>'+
-      '<div class="kv"><div><small>Marking</small><b>+4 / −1 / 0</b></div><div><small>Median time</small><b>'+q.m+' s</b></div><div><small>Acceptance</small><b>'+(c.acc*100).toFixed(1)+'%</b></div><div><small>Submissions</small><b>'+fmtK(c.att)+'</b></div></div>'+
+      '<div class="kv"><div><small>Marking</small><b>+4 / −1 / 0</b></div><div><small>Median time</small><b>'+q.m+' s</b></div><div><small>Success rate</small><b>'+(c.acc*100).toFixed(1)+'%</b></div><div><small>Attempts</small><b>'+fmtK(c.att)+'</b></div></div>'+
       '<p class="insight">A wrong answer costs 1 extra mark, so a guess breaks even at 20% confidence. <span class="sim">Simulated stats</span></p>'+(q.src?'<p class="insight">Source: '+q.src+'</p>':'');
   }else if(S.tab==='sol'){
-    body=mine.length?'<h3>Answer</h3><div class="code">'+L[q.a]+'. '+q.o[q.a]+'</div><p class="qtext">'+q.e+'</p>':'<p class="empty">Submit an answer to unlock the solution.</p>';
+    body=mine.length?'<h3>Answer</h3><div class="code">'+L[q.a]+'. '+q.o[q.a]+'</div><p class="qtext">'+q.e+'</p>':'<p class="empty">Check one answer to unlock the worked solution.</p>';
   }else{
     body=mine.length?'<div class="tblwrap"><table><thead><tr><th>Status</th><th>Time</th><th>Marks</th><th>When</th></tr></thead><tbody>'+mine.slice().reverse().map(function(a){
-      var s=a.ok===true?'<span class="pos">Accepted</span>':a.ok===false?'<span class="neg">Wrong Answer</span>':'Skipped';
+      var s=a.ok===true?'<span class="pos">Correct</span>':a.ok===false?'<span class="neg">Needs work</span>':'Left blank';
       return '<tr><td>'+s+'</td><td>'+(a.t/1000).toFixed(1)+' s</td><td>'+(a.m>0?'+':'')+a.m+'</td><td>'+new Date(a.ts).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+'</td></tr>';
     }).join('')+'</tbody></table></div>':'<p class="empty">No submissions yet.</p>';
   }
@@ -319,14 +329,14 @@ function resultHTML(){
   var q=S.q,r=S.res,L='ABCD',ts=(r.t/1000).toFixed(1),c=cohort(q);
   if(r.kind==='ok'){
     var cm=compare(q,r.t/1000);
-    return '<div class="res ok"><div class="sub"><h2>Accepted</h2><span class="mk pos">+4 marks</span></div>'+
+    return '<div class="res ok"><div class="sub"><h2>Correct</h2><span class="mk pos">+4 marks</span></div>'+
       '<div class="boxes"><div class="box"><small>Time</small><div class="v">'+ts+' s</div><div class="w">Beats '+Math.round(cm.slower*100)+'% of accepted submissions</div></div>'+
       '<div class="box"><small>Same second</small><div class="v">~'+fmtIN(cm.same)+'</div><div class="w">of '+fmtIN(c.correct)+' who solved it, at '+Math.floor(r.t/1000)+' s</div></div></div>'+
       '<div class="histbox">'+histSVG(q,r.t/1000)+'</div><p class="hint" style="margin:8px 0 0">Dashed line is the median ('+q.m+' s). <span class="sim">Simulated cohort</span></p>'+
       '<p class="why">'+q.e+'</p></div>';
   }
   if(r.kind==='bad'){
-    return '<div class="res bad"><div class="sub"><h2>Wrong Answer</h2><span class="mk neg">−1 mark</span></div>'+
+    return '<div class="res bad"><div class="sub"><h2>Needs work</h2><span class="mk neg">−1 mark</span></div>'+
       '<div class="code"><small>Your answer</small>'+L[S.sel]+'. '+q.o[S.sel]+'</div><div class="code"><small>Expected</small>'+L[q.a]+'. '+q.o[q.a]+'</div>'+
       '<p class="why">'+q.e+'</p><p class="why">'+Math.round(c.acc*100)+'% of students get this right, and they take a median of '+q.m+' s. You spent '+ts+' s. <span class="sim">Simulated cohort</span></p></div>';
   }
@@ -339,8 +349,8 @@ function drawRight(){
     if(S.locked){if(i===q.a)cls+=' right';else if(i===S.sel)cls+=' wrong'}
     return '<li><button class="'+cls+'" role="radio" aria-checked="'+(S.sel===i)+'" data-act="pick" data-i="'+i+'"'+(S.locked?' disabled':'')+'><span class="bub">'+L[i]+'</span><span>'+t+'</span></button></li>';
   }).join('');
-  var actions=S.locked?'<a class="btn" id="nextbtn" href="#q-'+nextId()+'">Next problem →</a><a class="btn ghost" href="#problems">Problem list</a>':
-    '<button class="btn" data-act="lock"'+(S.sel<0?' disabled':'')+'>Submit</button><button class="btn ghost" data-act="skip">Skip (0)</button><span class="hint">A–D or 1–4 to choose, Enter to submit</span>';
+  var actions=S.locked?'<a class="btn" id="nextbtn" href="#q-'+nextId()+'">Next question →</a><a class="btn ghost" href="#problems">All questions</a>':
+    '<button class="btn" data-act="lock"'+(S.sel<0?' disabled':'')+'>Check answer</button><button class="btn ghost" data-act="skip">Leave blank</button><span class="hint">A–D or 1–4 to choose, Enter to check</span>';
   $('#rpane').innerHTML='<div class="ahead"><b>Your answer</b><span class="scheme">+4 / −1</span><span class="timer" id="timer">'+(S.locked&&S.res?fmtT(S.res.t):'0.0 s')+'</span></div>'+
     '<ul class="opts" role="radiogroup" aria-label="Options">'+opts+'</ul><div class="actions">'+actions+'</div>'+(S.locked?resultHTML():'');
   typeset($('#rpane'));
@@ -369,7 +379,7 @@ function lockAns(skip){
 /* ---------- profile ---------- */
 function chartSVG(e){
   var a=forExam(e),pop=EXAMS[e].pop;
-  if(a.length<1)return '<p class="empty">Submit a few answers to start your rank journey.</p>';
+  if(a.length<1)return '<p class="empty">Answer a few questions to start your rank journey.</p>';
   var W=640,H=230,pl=64,pr=16,pt=14,pb=30,net=0,pts=[{n:0,air:estFrom(0,0,pop).air}];
   a.forEach(function(x,i){net+=x.m;pts.push({n:i+1,air:estFrom(net,i+1,pop).air})});
   var N=pts.length-1,lo=Math.log10(100),hi=Math.log10(pop);
@@ -414,7 +424,7 @@ function renderProfile(){
   var st=streaks(),hm=heatSVG(st.set);
   $('#view').innerHTML='<div class="stack"><section class="card airhero"><span class="lab">'+ex.label+' · '+ex.full+'</span>'+
     '<div class="airnum">'+(n?'~'+fmtIN(es.air):'-')+'</div>'+
-    '<div>'+(n?'Top '+fmtTop(es.top)+'% of about '+fmtIN(ex.pop)+' candidates (modelled pool)':'Submit your first answer to get an estimate.')+'</div>'+
+    '<div>'+(n?'Top '+fmtTop(es.top)+'% of about '+fmtIN(ex.pop)+' candidates (modelled pool)':'Answer your first question to get an estimate.')+'</div>'+
     '<div class="conf"><span>Confidence: '+conf+' ('+n+' submitted)</span><span class="meter"><i style="width:'+Math.round(Math.min(n/30,1)*100)+'%"></i></span></div></section>'+
     '<section class="card"><h3>Your plan</h3><div class="planform">'+
       '<div class="arow" style="max-width:520px">'+
@@ -429,7 +439,7 @@ function renderProfile(){
         }).join('')+'</div></div>'+
       '<div class="actions"><button class="btn sm" data-act="saveplan">Save plan</button><span class="hint">Used by your dashboard and recommendations.</span></div>'+
     '</div></section>'+
-    '<div class="two"><section class="card"><h3>Solved</h3><div class="bars">'+bars+'</div><p class="insight">Counted per problem in '+ex.name+'. A problem is solved once you have an Accepted submission.</p></section>'+
+    '<div class="two"><section class="card"><h3>Solved</h3><div class="bars">'+bars+'</div><p class="insight">Counted per problem in '+ex.name+'. A question counts as cleared once you have a correct answer.</p></section>'+
     '<section class="card"><h3>Your numbers</h3><div class="stats">'+
       '<div class="stat"><small>Net marks</small><b class="'+(net>0?'pos':net<0?'neg':'')+'">'+(net>0?'+':'')+net+'</b></div>'+
       '<div class="stat"><small>Submitted</small><b>'+n+'</b></div>'+
@@ -455,7 +465,7 @@ function renderDashboard(){
   var hr=new Date().getHours(),greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   var name=U&&!U.guest?String(U.name).trim().split(/\s+/)[0]:'there';
   var today=dayKey(Date.now()),todayN=a.filter(function(x){return dayKey(x.ts)===today}).length;
-  var goal=(U&&U.goal)||10,pct=Math.min(100,Math.round(todayN/goal*100)),circ=2*Math.PI*30;
+  var goal=(U&&U.goal)||10,pct=Math.min(100,Math.round(todayN/goal*100));
   var dq=dailyQ(),weak=weakTopics(3),recent=a.slice(-5).reverse();
   var ok=a.filter(function(x){return x.ok===true}).length,wr=a.filter(function(x){return x.ok===false}).length;
   var acc=ok+wr?Math.round(ok/(ok+wr)*100):0;
@@ -464,19 +474,18 @@ function renderDashboard(){
   var left=Math.max(0,goal-todayN);
   var focus=U&&U.focus&&U.focus.length?U.focus.join(' · '):ex.subjects.join(' · ');
 
-  $('#view').innerHTML='<section class="hero">'+
-    '<div class="hi">Dashboard · '+esc(ex.full)+'</div>'+
+  $('#view').innerHTML='<section class="hero"><div class="hero-main">'+
+    '<div class="hi">Field note · '+esc(ex.full)+'</div>'+
     '<h1>'+greet+', '+esc(name)+'.</h1>'+
     '<p>'+esc(target)+' &nbsp;·&nbsp; '+(left?left+' questions to hit today’s goal':'Daily goal complete — nice work')+'</p>'+
     '<div class="herogrid">'+
       '<div class="hstat"><small>Level</small><b>'+li.lv+'</b><span>'+li.cur+' / '+li.need+' XP</span></div>'+
       '<div class="hstat"><small>Streak</small><b>'+st.cur+'d</b><span>Longest '+st.max+'d</span></div>'+
       '<div class="hstat"><small>Est. rank</small><b>'+(a.length?'~'+fmtIN(es.air):'-')+'</b><span>'+(a.length?'Top '+fmtTop(es.top)+'%':'Answer to begin')+'</span></div>'+
-    '</div></section>'+
+    '</div></div><div class="hero-mark" aria-hidden="true"></div></section>'+
     '<div class="dgrid"><div class="dstack">'+
       '<section class="card"><h3>Today’s goal</h3><div class="goalrow">'+
-        '<svg class="ring" viewBox="0 0 74 74" role="img" aria-label="'+pct+'% of daily goal"><circle class="tr" cx="37" cy="37" r="30"/>'+
-        '<circle class="fg" cx="37" cy="37" r="30" stroke-dasharray="'+(circ*pct/100).toFixed(1)+' '+circ.toFixed(1)+'"/><text x="37" y="42">'+pct+'%</text></svg>'+
+        ladderSVG(pct,pct+'%')+
         '<div class="goalmeta"><b>'+todayN+' / '+goal+' solved today</b><small>'+esc(focus)+'</small>'+
         '<small style="margin-top:6px">Keep a streak going: one answer a day counts.</small></div></div></section>'+
       '<section class="card"><h3>Today’s question</h3><div class="dtask"><div>'+
@@ -572,7 +581,7 @@ function renderAnalytics(){
       '<div class="kpi"><small>Est. rank</small><b>'+(a.length?'~'+fmtIN(estFrom(net,a.length,ex.pop).air):'-')+'</b><span>modelled estimate</span></div>'+
     '</div>'+
     '<div class="angrid">'+
-      '<section class="card"><h3>Submissions over time</h3>'+trendSVG(days)+'<p class="datnote">Each dot is a day with at least one answer.</p></section>'+
+      '<section class="card"><h3>Answers over time</h3>'+trendSVG(days)+'<p class="datnote">Each dot is a day with at least one answer.</p></section>'+
       '<section class="card"><h3>Where you lose marks</h3>'+focus+'<p class="datnote">Ranked by accuracy, then by how often you attempt the topic.</p></section>'+
       '<section class="card"><h3>By subject</h3><div class="barlist">'+subj+'</div></section>'+
       '<section class="card"><h3>By difficulty</h3><div class="barlist">'+diff+'</div></section>'+
@@ -612,7 +621,7 @@ function renderContest(){
   var myAc=(ok+wr?Math.round(ok/(ok+wr)*100)+'%':'-')+(my.length?' · '+Math.round(sum(my,function(a){return a.t})/my.length/1000)+'s':'');
   var left=p.e.getTime()-now,days=Math.floor(left/864e5),hrs=Math.floor(left%864e5/36e5);
   var cn=Math.floor((p.s.getTime()-new Date(2026,0,5).getTime())/604800000)+1;
-  var title=kind==='w'?'Weekly Contest '+cn:'Monthly Contest';
+  var title=kind==='w'?'Week '+cn+' board':'This month’s board';
   var lab=kind==='w'?(p.s.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' – '+new Date(p.e.getTime()-1).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})):p.s.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
   var head=rowHTML('Rank','Student','Marks','Acc · Avg','head'),rows=head,rank=0,i;
   var sRow=function(s,rk){return rowHTML(rk,s.name,s.marks,s.acc+'% · '+s.avg+'s')};
@@ -627,13 +636,13 @@ function renderContest(){
     }
   }else{for(i=0;i<10;i++)rows+=sRow(sim[i],i+1)}
   var span=kind==='w'?'week':'month';
-  var status=my.length?'<p class="insight">You are <b>#'+rank+'</b> of 601 active students this '+span+' with <b>'+net+'</b> net marks.</p>':'<p class="insight">Submit an answer this '+span+' to appear on the board.</p>';
+  var status=my.length?'<p class="insight">You are <b>#'+rank+'</b> of 601 active students this '+span+' with <b>'+net+'</b> net marks.</p>':'<p class="insight">Answer a question this '+span+' to appear on the board.</p>';
   var hist=function(k2,n2){var out='';for(var j=1;j<=n2;j++){var pp=periodFor(k2,j),c=simCohort(e,k2,pp,1)[0];
     var l=k2==='w'?pp.s.toLocaleDateString('en-IN',{day:'numeric',month:'short'}):pp.s.toLocaleDateString('en-IN',{month:'short',year:'numeric'});
     out+='<li><span>'+l+' · '+c.name+'</span><b>'+c.marks+'</b></li>'}return out};
   $('#view').innerHTML='<div class="toolbar"><div class="seg" role="group" aria-label="Period"><button data-act="period" data-v="w" aria-pressed="'+(kind==='w')+'">Weekly</button><button data-act="period" data-v="m" aria-pressed="'+(kind==='m')+'">Monthly</button></div>'+
     '<div class="period"><b>'+title+'</b> · '+lab+' · ends in '+(days?days+'d ':'')+hrs+'h · '+EXAMS[e].name+'</div></div>'+
-    '<section class="spot"><div><div class="crown">'+(kind==='w'?'Topper of the week':'Topper of the month')+'</div><div class="nm">'+top.name+'</div></div><div class="sc">'+top.marks+' <small>marks</small></div></section>'+
+    '<section class="spot"><div><div class="crown">'+(kind==='w'?'Top of the week':'Top of the month')+'</div><div class="nm">'+top.name+'</div></div><div class="sc">'+top.marks+' <small>marks</small></div></section>'+
     '<section class="card lb">'+rows+'</section>'+status+'<p class="hint"><span class="sim">Simulated cohort</span> Names and scores are generated for this prototype.</p>'+
     '<div class="hist2"><section class="card"><h3>Previous weekly toppers</h3><ul class="past">'+hist('w',4)+'</ul></section><section class="card"><h3>Previous monthly toppers</h3><ul class="past">'+hist('m',3)+'</ul></section></div>';
 }
