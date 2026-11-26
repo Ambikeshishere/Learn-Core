@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Build questions.js for AIR Ladder from the JEEBench dataset (IIT Delhi DAIR group, MIT licence).
 
-    python3 import_questions.py                 # downloads data.zip from GitHub
-    python3 import_questions.py path/to/data.zip
-    python3 import_questions.py --out my_questions.js
+    python3 tools/import_questions.py                 # downloads data.zip from GitHub
+    python3 tools/import_questions.py path/to/data.zip
+    python3 tools/import_questions.py --out my_questions.js
 
 Only single-correct MCQs are kept, because the app shows four options and one right answer.
 Numeric, integer and multiple-correct problems are skipped.
